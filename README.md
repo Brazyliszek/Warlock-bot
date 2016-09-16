@@ -1,6 +1,8 @@
 # Warlock-bot
 automation some play aspects of game Tibia
 
+
+
 Idea:
 
 Is to make a tool that will automate runemaking and make a chance for user to survive player attack or any other interruption by setting alarm modes and checks. Main goal is to help the players but also not to destroy old tibia community by massive rune farming so clients to operate was reduced to two at the same time.
