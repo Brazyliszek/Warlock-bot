@@ -2,8 +2,7 @@
 automation some play aspects of game Tibia
 
 Idea:
-
-    Is to make a tool that will automate runemaking and make a chance for user to survive player attack or any other interruption by setting alarm modes and checks. Main goal is to help the players but also not to destroy old tibia community by massive rune farming so clients to operate was reduced to two at the same time.
+Is to make a tool that will automate runemaking and make a chance for user to survive player attack or any other interruption by setting alarm modes and checks. Main goal is to help the players but also not to destroy old tibia community by massive rune farming so clients to operate was reduced to two at the same time.
 
 
 Bot main functions:
@@ -15,5 +14,6 @@ Bot main functions:
 *   easy tool to obtain pictures of ingame items
 *   it stores last used settings, so you won't have to configure it everytime you close the bot
 
-project thread:     https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot
-see also:           https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
+project thread:      https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot
+
+see also:   https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
