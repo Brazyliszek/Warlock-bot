@@ -1,4 +1,4 @@
-﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn All, Off    ; #Warn eables warnings to assist with detecting common errors, while "all, off" makes them all disabled
 #HotkeyInterval 1000  ; This is  the default value (milliseconds).
 #MaxHotkeysPerInterval 200
@@ -13,7 +13,8 @@ SetControlDelay, -1
 CoordMode, Mouse, Screen 
 #Include Gdip_all.ahk                               ; IMPORTANT LIBRARY, AVAILABLE HERE > http://www.autohotkey.net/~Rseding91/Gdip%20All/Gdip_All.ahk
 
-global version := "0.9.0 - beta"
+global version := "0.9.2 - beta"
+MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`, which means it still has some bugs and not all function may work propely. Please report all bugs on forum tibiapf.com in valid thread. `n`nThanks for using my software`, hope you like it. `nMate/Brazyliszek
 
 ; created by Mate @tibiapf.com
 
@@ -34,6 +35,16 @@ global version := "0.9.0 - beta"
 ; 8) It's not necessary but you better have one empty slot in each backpack of blank runes
 
 
+
+
+; latest ver. changelog
+;   0.9.2
+;       solved problems with not loading previously saved settings
+;       removed tests hotkeys f1 and f2 from public bot version
+;       changed auth gui to make password and account name unchangable
+;   
+;   0.9.1   
+;       added inital msgbox, informing about version and where to report bugs
 
  ; ######################################################################### VARIABLES ##############################################################################
 global WalkMethod_IfFood 
@@ -61,11 +72,9 @@ global planned_time1
 global current_time2 := 0       ; prev. was a_tickcount, not sure if will work
 global deviation2 := 0
 global planned_time2
-
 global randomization := 5          ; level of randomness in functions 
 global steps_to_walk := 7          ; how many sqm bot has to go incase of alarm
 global show_notifications := 1      ; if you want notification to be displayed set 1, else 0
-
 coord_var = 0
 tab_window_size_x = 465 
 tab_window_size_y = 260 
@@ -118,6 +127,8 @@ pass_authentication:
 Gui, New, +Caption
 IniRead, last_used_login, basic_settings.ini, authentication data, last_used_login
 IniRead, last_used_pass, basic_settings.ini, authentication data, last_used_pass
+last_used_login := "demo"
+last_used_pass := "demo"
 Gui, Add,edit,x5 y26 w80 h17 vuser, %last_used_login%
 Gui, Add,edit,x5 y60 w80 h17 password vpass, %last_used_pass%
 Gui, Add,button,x5 y80 h20 w55 gLogin center +BackgroundTrans, Login
@@ -126,11 +137,13 @@ Gui, Add, Pic, x0 y0 0x4000000, %A_WorkingDir%\Images\warlockbot_startwin.png
 Gui, font, bold s8
 Gui, Add, Text, x95 y130 w200 vauth_text cWhite +BackgroundTrans, Enter your license account data.
 Gui, Show, w287 h149,Authentication
+GuiControl, Disable, pass
+GuiControl, Disable, user
 start_value := 1
 return
 
 Help_button:
-MsgBox, 0, Help, Version: %version%`nIf any problems occured contact us using data below.`n`nSupport: via privmassage on forum tibiapf.com @Mate`n`n`ngithub site: https://github.com/Brazyliszek/Warlock-bot`nproject thread: https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot`nsee also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
+MsgBox, 0, Help, Version: %version%`nStandard password for beta version is demo/demo. If any other problems occured contact us using data below.`n`nSupport: via privmassage on forum tibiapf.com @Mate`n`n`ngithub site: https://github.com/Brazyliszek/Warlock-bot`nproject thread: https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot`nsee also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
 return
 
 Login:   
@@ -419,19 +432,6 @@ if (mc_count = 1){                                       ; disabling few functio
 Gui,Add, Pic, x0 y0 w%pic_window_size_x% h%pic_window_size_y% 0x4000000, %A_WorkingDir%\Images\background.png
 Gui,Show, w%pic_window_size_x% h%pic_window_size_y%, %BOTName%
 
-Gui, Screenshoot_window: New
-Gui, Screenshoot_window: -SysMenu +ToolWindow -Caption +Border +AlwaysOnTop
-Gui, Screenshoot_window: Font,norm bold s10
-Gui, Screenshoot_window: Add,Text, vText_to_display,xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Gui, Screenshoot_window: Font
-Gui, Screenshoot_window: Add,Text,, Move your mouse to center of item you want to save`nand click left mouse button. Or click escape to cancel.
-
-Gui, screen_box: New
-Gui screen_box: +alwaysontop -Caption +Border +ToolWindow +LastFound
-Gui, screen_box: Color, ADEBDA
-WinSet, Transparent, 50 ; Else Add transparency
-
-
 IniRead, Rune_spellname1, basic_settings.ini, bot variables, Rune_spellname1
 IniRead, Rune_spellname2, basic_settings.ini, bot variables, Rune_spellname2
 IniRead, Spelltime1, basic_settings.ini, bot variables, Spelltime1
@@ -504,7 +504,17 @@ GuiControl,, house_pos_y, %house_pos_y%
 GuiControl,, hand_slot_pos_x, %hand_slot_pos_x%
 GuiControl,, hand_slot_pos_y, %hand_slot_pos_y%
 
+Gui, Screenshoot_window: New
+Gui, Screenshoot_window: -SysMenu +ToolWindow -Caption +Border +AlwaysOnTop
+Gui, Screenshoot_window: Font,norm bold s10
+Gui, Screenshoot_window: Add,Text, vText_to_display,xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Gui, Screenshoot_window: Font
+Gui, Screenshoot_window: Add,Text,, Move your mouse to center of item you want to save`nand click left mouse button. Or click escape to cancel.
 
+Gui, screen_box: New
+Gui screen_box: +alwaysontop -Caption +Border +ToolWindow +LastFound
+Gui, screen_box: Color, ADEBDA
+WinSet, Transparent, 50 ; Else Add transparency
 
 
 #Persistent               ; to overwrite settings only if main window has been shown
@@ -749,13 +759,6 @@ sleep_random(500,900)
 return
 }
 
-f1::
-alarm(title_tibia1, "food")
-return
-
-f2::
-alarm(title_tibia2, "food")
-return
 
 alarm(client_id, type){
    GuiControlGet, Alarms_enabled,,Alarms_enabled
@@ -1779,8 +1782,6 @@ if (CastSpell_IfBlank = 1){
    GuiControl,,Logout_IfBlank,0
 }
 return
-
-
 
 DoNothing_IfPlayer:
 GuiControlGet, DoNothing_IfPlayer,,DoNothing_IfPlayer
