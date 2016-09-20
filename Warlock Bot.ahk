@@ -13,8 +13,8 @@ SetControlDelay, -1
 CoordMode, Mouse, Screen 
 #Include Gdip_all.ahk                               ; IMPORTANT LIBRARY, AVAILABLE HERE > http://www.autohotkey.net/~Rseding91/Gdip%20All/Gdip_All.ahk
 
-global version := "0.9.2 - beta"
-MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`, which means it still has some bugs and not all function may work propely. Please report all bugs on forum tibiapf.com in valid thread. `n`nThanks for using my software`, hope you like it. `nMate/Brazyliszek
+global version := "0.9.3 - beta"
+MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`, which means it still has some bugs and not all function may work propely. Please report all bugs, false alerts, crashes on forum tibiapf.com with every important details in valid thread. `n`nThanks for using my software`, hope you like it. `nMate/Brazyliszek
 
 ; created by Mate @tibiapf.com
 
@@ -22,7 +22,18 @@ MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`,
 ; see also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
 ; github site: https://github.com/Brazyliszek/Warlock-bot
 
+;################## todos ###################
 ; pause() might not work propely
+; should add to pause as alarm type with its checkboxes
+; add record and play macro depending on runemake cycle time
+; add reminder to change blank runes (less important)
+; add more efficient randomization
+; add restore previous active window
+; screen alarm goes fuck up when maximizing affected on window from state of deskopt with 0 wins wactive
+; lines 261 - should add notification()
+
+
+
 
 ; MAIN RULES USING THIS SCRIPT AND FEW TIPS:
 ; 1) Bot depends on time instead of mana amount to create runes
@@ -32,12 +43,19 @@ MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`,
 ; 5) Your inventory must be on right side of the screen.
 ; 6) ImageSearch searches for images from topleft to bottomright side of desired area. Keep that in mind.
 ; 7) If constantly bot returns "couldn't find free slot on inventory" try to take another image, dont really need to be fully in center.
-; 8) It's not necessary but you better have one empty slot in each backpack of blank runes
-
 
 
 
 ; latest ver. changelog
+;   0.9.3
+;       repaired bug with crash if last used client directory has changed
+;       now you can change in ini files values of randomization (1-15~), food and antylog time (ms), to show or not notifications (bool), and blank rune spell (string)
+;       changed action order in case of alarm execution (now is: logout>walk>sound>shutdown)
+;       repaired bug with shutdown/walk alarm type, now you can do both in the same time (in specified oreder)
+;       repaired bug with food/anty log delay (it should eat once every 150sec not every each cicle)
+;       minor changes to pause(), still not tested
+;
+;
 ;   0.9.2
 ;       solved problems with not loading previously saved settings
 ;       removed tests hotkeys f1 and f2 from public bot version
@@ -63,6 +81,8 @@ global hand_slot_pos_x
 global hand_slot_pos_y
 global house_pos_x      
 global house_pos_y
+global title_tibia1
+global title_tibia2
 global pid_tibia1
 global pid_tibia2
 global Bot_protection = 0
@@ -74,7 +94,9 @@ global deviation2 := 0
 global planned_time2
 global randomization := 5          ; level of randomness in functions 
 global steps_to_walk := 7          ; how many sqm bot has to go incase of alarm
-global show_notifications := 1      ; if you want notification to be displayed set 1, else 0
+global show_notifications := 1     ; if you want notification to be displayed set 1, else 0
+global food_time := 100000         ; bot doesnt eat each cicle but rather checks if last eating wasn't earlier than current time - food_time (ms)
+global anty_log_time := 300000     ; same as above, but relate of anty_log function
 coord_var = 0
 tab_window_size_x = 465 
 tab_window_size_y = 260 
@@ -143,7 +165,7 @@ start_value := 1
 return
 
 Help_button:
-MsgBox, 0, Help, Version: %version%`nStandard password for beta version is demo/demo. If any other problems occured contact us using data below.`n`nSupport: via privmassage on forum tibiapf.com @Mate`n`n`ngithub site: https://github.com/Brazyliszek/Warlock-bot`nproject thread: https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot`nsee also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
+MsgBox, 0, Help, Version: %version%`nStandard password for beta version is demo/demo. If any other problems occured contact me using data below.`n`nSupport: via privmassage on forum tibiapf.com @Mate`n`n`ngithub site: https://github.com/Brazyliszek/Warlock-bot`nproject thread: https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot`nsee also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
 return
 
 Login:   
@@ -220,7 +242,7 @@ else
 return
 
 Help_initial_button:
-MsgBox, 0, Help, First you have to do is to enter valid game client location. Is neccesery for bot to obtain its unique process id.`nSecondly you got to choose on how many clients will you operate. You can use Warlock Bot on up to two clients.`nAnd the last thing - select SendMode Event - only if bot returns errors like "There was problem with function use()" or for example bot has problems with eating food. It means that server owners made their client bot unfriendly. It will slow the bot a little bit and make mouse movements visible.
+MsgBox, 0, Help, First you have to do is to enter valid game client location. Is neccesery for bot to obtain its unique process id.`nSecondly you got to choose on how many clients will you operate. You can use Warlock Bot on up to two clients.`nAnd the last thing - select SendMode Event - only if bot returns errors like "There was problem with function use()" or for example bot has problems with eating food or moving items in inventory. It means that server owners made their client bot unfriendly. It will slow the bot a little bit and make mouse movements visible.
 return
 
 Check_initial_settings:
@@ -233,6 +255,12 @@ IniWrite, %Bot_protection%, basic_settings.ini, initialization data, Bot_protect
 IfNotInString, edit_client_dir, exe 
    {   
    TrayTip, %BOTName%, You should enter valid tibia clients file path (*.exe).
+   SetTimer, RemoveTrayTip, 3500
+   return
+}
+IfNotExist, %edit_client_dir%
+   {
+   TrayTip, %BOTName%, Couldn't find client in given directory.
    SetTimer, RemoveTrayTip, 3500
    return
 }
@@ -432,6 +460,13 @@ if (mc_count = 1){                                       ; disabling few functio
 Gui,Add, Pic, x0 y0 w%pic_window_size_x% h%pic_window_size_y% 0x4000000, %A_WorkingDir%\Images\background.png
 Gui,Show, w%pic_window_size_x% h%pic_window_size_y%, %BOTName%
 
+IniRead, randomization, basic_settings.ini, conf values, randomization
+IniRead, steps_to_walk, basic_settings.ini, conf values, steps_to_walk
+IniRead, show_notifications, basic_settings.ini, conf values, show_notifications
+IniRead, blank_rune_spell, basic_settings.ini, conf values, blank_rune_spell
+IniRead, food_time, basic_settings.ini, conf values, food_time
+IniRead, anty_log_time, basic_settings.ini, conf values, anty_log_time
+
 IniRead, Rune_spellname1, basic_settings.ini, bot variables, Rune_spellname1
 IniRead, Rune_spellname2, basic_settings.ini, bot variables, Rune_spellname2
 IniRead, Spelltime1, basic_settings.ini, bot variables, Spelltime1
@@ -465,11 +500,7 @@ IniRead, house_pos_x, basic_settings.ini, bot variables, house_pos_x
 IniRead, house_pos_y, basic_settings.ini, bot variables, house_pos_y
 IniRead, hand_slot_pos_x, basic_settings.ini, bot variables, hand_slot_pos_x
 IniRead, hand_slot_pos_y, basic_settings.ini, bot variables, hand_slot_pos_y
-IniRead, randomization, basic_settings.ini, bot variables, randomization
-IniRead, steps_to_walk, basic_settings.ini, bot variables, steps_to_walk
-IniRead, show_notifications, basic_settings.ini, bot variables, show_notifications
-IniRead, blank_rune_spell, basic_settings.ini, bot variables, blank_rune_spell
-  
+
 GuiControl,, Rune_spellname1, %Rune_spellname1%
 GuiControl,, Rune_spellname2, %Rune_spellname2%
 GuiControl,, Spelltime1, %Spelltime1%
@@ -549,8 +580,7 @@ Enabled_runemaking1:
       return
    }
    if (Enabled_runemaking1 = 1){
-      if (planned_time1 = "")
-         global planned_time1 := % A_TickCount + 5000
+      global planned_time1 := % A_TickCount + 5000
       SetTimer, check_runes, 1000
    }
    check_gui()
@@ -582,8 +612,7 @@ Enabled_runemaking2:
       return
    }
    if (Enabled_runemaking2 = 1){
-      if (planned_time2 = "")
-         global planned_time2 := % A_TickCount + 10000
+      global planned_time2 := % A_TickCount + 10000
       SetTimer, check_runes, 1000
    }
    check_gui()
@@ -629,12 +658,12 @@ Rune_execution1:
       if ((client_screen_checker = "client 1") and (Enabled_runemaking1 = 1)){
          IfWinNotActive, %title_tibia1%
             WinActivate, %title_tibia1%
-         WinWait, %title_tibia1%
+         WinWaitActive, %title_tibia1%
       }
       else if ((client_screen_checker = "client 2") and (Enabled_runemaking2 = 1)){
          IfWinNotActive, %title_tibia2%
             WinActivate, %title_tibia2%
-         WinWait, %title_tibia2%
+         WinWaitActive, %title_tibia2%
       }
    }
    global execution_allowed := 1
@@ -668,12 +697,12 @@ Rune_execution2:
       if ((client_screen_checker = "client 1") and (Enabled_runemaking1 = 1)){
          IfWinNotActive, %title_tibia1%
             WinActivate, %title_tibia1%
-         WinWait, %title_tibia1%
+         WinWaitActive, %title_tibia1%
       }
-      else if ((client_screen_checker = "client 2") and (Enabled_runemaking2 = 1)){
+      if ((client_screen_checker = "client 2") and (Enabled_runemaking2 = 1)){
          IfWinNotActive, %title_tibia2%
             WinActivate, %title_tibia2%
-         WinWait, %title_tibia2%
+         WinWaitActive, %title_tibia2%
       }
    }
    global execution_allowed := 1
@@ -779,24 +808,24 @@ alarm(client_id, type){
       Notification(client_id, "Couldn't find food in inventory.")
       if (DoNothing_IfFood = 1)
          return
-      if (PlaySound_IfFood = 1){
-         sound("alarm_food.mp3")
-      }
       if (Logout_IfFood = 1){         
          GuiControl,, Enabled_runemaking%client_number%, 0
          Check_gui()
          logout(client_id)
+      }
+      if (WalkMethod_IfFood != "disabled"){         
+         GuiControl,, Enabled_runemaking%client_number%, 0
+         Check_gui()
+         walk(client_id, WalkMethod_IfFood, steps_to_walk)
+      }
+      if (PlaySound_IfFood = 1){
+         sound("alarm_food.mp3")
       }
       if (ShutDown_IfFood = 1){
          GuiControl,, Enabled_runemaking%client_number%, 0
          Check_gui()
          shutdown()
          pause("on", 1)
-      }
-      if (WalkMethod_IfFood != "disabled"){         
-         GuiControl,, Enabled_runemaking%client_number%, 0
-         Check_gui()
-         walk(client_id, WalkMethod_IfFood, steps_to_walk)
       }
       return 1
    }
@@ -810,24 +839,24 @@ alarm(client_id, type){
       Notification(client_id, "Couldn't find blank rune in inventory.")
       if (DoNothing_IfBlank = 1)
          return
-      if (PlaySound_IfBlank = 1){
-         sound("alarm_blank.mp3")
-      }
       if (Logout_IfBlank = 1){
          GuiControl,, Enabled_runemaking%client_number%, 0
          Check_gui()
          logout(client_id)
+      }
+      if (WalkMethod_IfBlank != "disabled"){
+         GuiControl,, Enabled_runemaking%client_number%, 0
+         Check_gui()
+         walk(client_id, WalkMethod_IfBlank, steps_to_walk)
+      }
+      if (PlaySound_IfBlank = 1){
+         sound("alarm_blank.mp3")
       }
       if (ShutDown_IfBlank = 1){
          GuiControl,, Enabled_runemaking%client_number%, 0
          Check_gui()
          shutdown()
          pause("on", 1)
-      }
-      if (WalkMethod_IfBlank != "disabled"){
-         GuiControl,, Enabled_runemaking%client_number%, 0
-         Check_gui()
-         walk(client_id, WalkMethod_IfBlank, steps_to_walk)
       }
       if (CastSpell_IfBlank = 1){
          GuiControlGet, Spell_to_cast_name,,Spell_to_cast_name
@@ -854,24 +883,24 @@ alarm(client_id, type){
       Notification(client_id, "There was a change on screen-check region.")
       if (DoNothing_IfPlayer = 1)
          return
-      if (PlaySound_IfPlayer = 1){
-         sound("alarm_screen.mp3")
-      }
       if (Logout_IfPlayer = 1){
          GuiControl,, Enabled_runemaking%client_number%, 0
          Check_gui()
          logout(client_id)
+      }
+      if (WalkMethod_IfPlayer != "disabled"){
+         walk(client_id, WalkMethod_IfPlayer, steps_to_walk)
+         GuiControl,, Enabled_runemaking%client_number%, 0
+         Check_gui()
+      }
+      if (PlaySound_IfPlayer = 1){
+         sound("alarm_screen.mp3")
       }
       if (ShutDown_IfPlayer = 1){
          GuiControl,, Enabled_runemaking%client_number%, 0
          Check_gui()
          shutdown()
          pause("on", 1)
-      }
-      if (WalkMethod_IfPlayer != "disabled"){
-         walk(client_id, WalkMethod_IfPlayer, steps_to_walk)
-         GuiControl,, Enabled_runemaking%client_number%, 0
-         Check_gui()
       }
       return 1
    }
@@ -888,7 +917,6 @@ say(client_id,text){                          ;  don't need window to be active
 }
 return
 
-
 eat_food(client_id){
    GuiControlGet, Enabled_runemaking1,, Enabled_runemaking1
    GuiControlGet, Enabled_runemaking2,, Enabled_runemaking2
@@ -901,9 +929,13 @@ eat_food(client_id){
       pid_tibia = %pid_tibia1%
    else
       pid_tibia = %pid_tibia2%
-   if (A_tickcount - last_time_eatfood%pid_tibia%) < 1000*60*3
+   if (A_tickcount - last_time_eatfood%pid_tibia%) < food_time
       return
+   IfWinNotActive, %client_id%
+      WinActivate, %client_id%
+   WinWaitActive, %client_id%
    if (find(client_id, "food1", "inventory", 1, 0) = 1){
+      last_time_eatfood%pid_tibia% := A_TickCount
       use(client_id, "food1")
       sleep_random(200,500)
       use(client_id, "food1")
@@ -912,6 +944,7 @@ eat_food(client_id){
       sleep_random(200,500)
    }
    else if (find(client_id, "food2", "inventory", 1, 0) = 1){
+      last_time_eatfood%pid_tibia% := A_TickCount
       use(client_id, "food2")
       sleep_random(200,500)
       use(client_id, "food2")
@@ -921,6 +954,7 @@ eat_food(client_id){
    }
    else
       alarm(client_id, "food")
+ ;  msgbox, client_id %client_id%,`n Enabled_runemaking1 %Enabled_runemaking1%,`n Enabled_runemaking2 %Enabled_runemaking2%,`n title_tibia1 %title_tibia1%,`n eat_food %eat_food%,`n pid_tibia %pid_tibia%,`n last_time_eatfood%pid_tibia%
 }
 return
 
@@ -937,7 +971,7 @@ anty_logout(client_id){                       ;  don't need window to be active
       pid_tibia = %pid_tibia1%
    else
       pid_tibia = %pid_tibia2%
-   if (A_tickcount - last_time_antylog%pid_tibia%) < 1000*60*8
+   if (A_tickcount - last_time_antylog%pid_tibia%) < anty_log_time
       return
    BlockInput, On
    ControlSend,, {Ctrl down}, %client_id%
@@ -962,7 +996,7 @@ move(client_id,object,destination){
    }
    IfWinNotActive, %client_id%
       WinActivate, %client_id%
-   WinWait, %client_id%
+   WinWaitActive, %client_id%
    global item_pos_x
    global item_pos_y  
    Random, random_pos_x, -randomization, randomization
@@ -1019,7 +1053,7 @@ use(client_id, object){
    }
    IfWinNotActive, %client_id%
       WinActivate, %client_id%
-   WinWait, %client_id%
+   WinWaitActive, %client_id%
    global item_pos_x
    global item_pos_y
    if ((object = "blank_rune") or (object = "conjured_rune1") or (object = "conjured_rune2") or (object = "free_slot") or (object = "food1") or (object = "food2") or (object = "backpack1") or (object = "backpack2")){
@@ -1141,6 +1175,14 @@ pause(status, finish_current_thread){              ; set 1 to let finish current
       global BOTName = "Warlock Bot - paused"
    }
    else{
+      GuiControlGet, Spelltime1,, Spelltime1
+      GuiControlGet, Spelltime2,, Spelltime2
+      if ((A_TickCount - planned_time1) > Spelltime1*1000){
+         global planned_time1 := % A_TickCount + 5000
+      }
+      if ((A_TickCount - planned_time2) > Spelltime2*1000){
+         global planned_time2 := % A_TickCount + 10000
+      }
       WinSetTitle,, Warlock, Warlock Bot
       global BOTName = "Warlock Bot"
    }
@@ -1181,7 +1223,7 @@ find(client_id, object, region, center, notification){
       }
    IfWinNotActive, %client_id%
       WinActivate, %client_id%
-   WinWait, %client_id%
+   WinWaitActive, %client_id%
    global image_name := A_WorkingDir . "\Images\" . object . ".bmp"
    if ( region = "inventory" ){
       start_x := % 3*A_ScreenWidth/4
@@ -1662,7 +1704,6 @@ GuiControlGet, ShutDown_IfFood,,ShutDown_IfFood
 GuiControlGet, WalkMethod_IfFood,,WalkMethod_IfFood
 if (ShutDown_IfFood = 1){
    GuiControl,,DoNothing_IfFood,0
-   GuiControl,Choose,WalkMethod_IfFood,1
 }
 return
 
@@ -1674,8 +1715,6 @@ GuiControlGet, ShutDown_IfFood,,ShutDown_IfFood
 GuiControlGet, WalkMethod_IfFood,,WalkMethod_IfFood
 if (WalkMethod_IfFood != 1)
    GuiControl,,DoNothing_IfFood,0
-if (ShutDown_IfFood = 1)
-   GuiControl,,ShutDown_IfFood,0
 return
 
 
@@ -1731,7 +1770,6 @@ GuiControlGet, WalkMethod_IfBlank,,WalkMethod_IfBlank
 GuiControlGet, CastSpell_IfBlank,,CastSpell_IfBlank
 if (ShutDown_IfBlank = 1){
    GuiControl,,DoNothing_IfBlank,0
-   GuiControl,Choose,WalkMethod_IfBlank,1
    GuiControl,,CastSpell_IfBlank,0
 }
 return
@@ -1747,8 +1785,6 @@ if (WalkMethod_IfBlank != 1){
    GuiControl,,CastSpell_IfBlank,0
    GuiControl,,DoNothing_IfBlank,0
 }
-if (ShutDown_IfBlank = 1)
-   GuiControl,,ShutDown_IfBlank,0
 return
 
 CastSpell_IfBlank:
@@ -1827,7 +1863,6 @@ GuiControlGet, ShutDown_IfPlayer,,ShutDown_IfPlayer
 GuiControlGet, WalkMethod_IfPlayer,,WalkMethod_IfPlayer
 if (ShutDown_IfPlayer = 1){
    GuiControl,,DoNothing_IfPlayer,0
-   GuiControl,Choose,WalkMethod_IfPlayer,1
 }
 return
 
@@ -1839,8 +1874,6 @@ GuiControlGet, ShutDown_IfPlayer,,ShutDown_IfPlayer
 GuiControlGet, WalkMethod_IfPlayer,,WalkMethod_IfPlayer
 if (WalkMethod_IfPlayer != 1)
    GuiControl,,DoNothing_IfPlayer,0
-if (ShutDown_IfPlayer = 1)
-   GuiControl,,ShutDown_IfPlayer,0
 return
 
 
