@@ -13,7 +13,7 @@ SetControlDelay, -1
 CoordMode, Mouse, Screen 
 #Include Gdip_all.ahk                               ; IMPORTANT LIBRARY, AVAILABLE HERE > http://www.autohotkey.net/~Rseding91/Gdip%20All/Gdip_All.ahk
 
-global version := "0.9.3 - beta"
+global version := "0.9.4 - beta"
 MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`, which means it still has some bugs and not all function may work propely. Please report all bugs, false alerts, crashes on forum tibiapf.com with every important details in valid thread. `n`nThanks for using my software`, hope you like it. `nMate/Brazyliszek
 
 ; created by Mate @tibiapf.com
@@ -31,6 +31,7 @@ MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`,
 ; add restore previous active window
 ; screen alarm goes fuck up when maximizing affected on window from state of deskopt with 0 wins wactive
 ; lines 261 - should add notification()
+; if alarm pauses the bot it stops makking runes after enabling runemaker
 
 
 
@@ -47,6 +48,11 @@ MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`,
 
 
 ; latest ver. changelog
+;   0.9.4
+;       repaired bug with spellcaster if no blank
+;       minor changes to runemake() algorithm
+;       added ver 32 and 64 bit
+;
 ;   0.9.3
 ;       repaired bug with crash if last used client directory has changed
 ;       now you can change in ini files values of randomization (1-15~), food and antylog time (ms), to show or not notifications (bool), and blank rune spell (string)
@@ -724,13 +730,15 @@ runemake(client_id, client_number){
    GuiControlGet, house_deposit,, house_deposit
    GuiControlGet, create_blank,, create_blank
    GuiControlGet, rune_spellname,, %rune_spellname_id%
-   if(create_blank = 1){
-      say(client_id, blank_rune_spell)           ; temporarly, should depend on blank_spellname settable in settings 
+   GuiControlGet, DoNothing_IfBlank,,DoNothing_IfBlank
+   if (create_blank = 1){
+      say(client_id, blank_rune_spell)        
       sleep_random(1500,2000)
    }
-   if ((hand_mode = 1) and (find(client_id, "blank_rune", "hand_slot", 1, 0) = 0)){
+   if (openNewBackpack = 1){
       blankrune_check:
       if (find(client_id, "blank_rune", "inventory", 1, 0) = 0){
+         sleep_random(100,250)
          if (find(client_id, backpack_id, "inventory", 1, 0) = 0)
             alarm(client_id, "blank_runes")
          else{
@@ -739,22 +747,29 @@ runemake(client_id, client_number){
             goto blankrune_check
          }
       }
-      else
-         move(client_id, "blank_rune", "hand")
-   sleep_random(300,500)
-   if (find(client_id, "blank_rune", "hand_slot", 1, 0) = 0)
-         notification(client_id, "Couldn't find blank rune on left hand slot.")
+   }
+   if (hand_mode = 1){
+      move(client_id, "blank_rune", "hand")
+      sleep_random(300,500)
+      if (find(client_id, "blank_rune", "hand_slot", 1, 0) = 0)
+         notification(client_id, "Couldn't find blank rune on hand slot.")
    }
    sleep_random(300,700)
    say(client_id, rune_spellname)
+   sleep_random(500,800)
    if (house_deposit = 1 and hand_mode = 1){
-      sleep_random(300,700)
       if (find(client_id, conjured_rune_id, "hand_slot", 1, 0) = 1){
+         sleep_random(100,200)
          move(client_id, "hand", "house")
          return
       }
+      else if (find(client_id, conjured_rune_id, "inventory", 1, 0) = 1){
+         sleep_random(100,200)
+         move(client_id, conjured_rune_id, "house")
+         return
+      }
       else
-         notification(client_id, "Couldn't find conjured rune on left hand slot. Can't throw it on desired position.")
+         notification(client_id, "Couldn't find conjured rune on screen. Can't throw it on desired position.")
    }
    else if (house_deposit = 1 and hand_mode = 0){
       if (find(client_id, conjured_rune_id, "inventory", 1, 0) = 1){
@@ -792,13 +807,11 @@ return
 alarm(client_id, type){
    GuiControlGet, Alarms_enabled,,Alarms_enabled
    if Alarms_enabled = 0
-      return
-   
+      return   
    IfInString, client_id, Game client 1             
       client_number := 1
    else
       client_number := 2
-   
    if (type = "food"){
       GuiControlGet, DoNothing_IfFood,,DoNothing_IfFood
       GuiControlGet, Logout_IfFood,,Logout_IfFood
@@ -867,7 +880,7 @@ alarm(client_id, type){
          if (Spell_to_cast_count - temp_count > 0){
             sleep_random(2000,2200)
             say(client_id,Spell_to_cast_name)
-            temp_count = % temp_count - 1
+            temp_count = % temp_count + 1
             goto, emergency_spellcaster
          }
       }
@@ -910,6 +923,7 @@ return
 
 say(client_id,text){                          ;  don't need window to be active
    BlockInput, On
+   ControlSend,,{enter}, %client_id%
    ControlSend,, %text%, %client_id%
    sleep_random(70,150)
    ControlSend,, {Enter}, %client_id%
@@ -1200,7 +1214,7 @@ notification(client_id, text){
          TrayTip, %client_id%, %old_text%`n%text%
       else
          TrayTip, %client_id%, %text%
-      SetTimer, RemoveTrayTip, 3500
+      SetTimer, RemoveTrayTip, 4500
       global notification_isbeing_show := 1
       global old_text := text
    }
