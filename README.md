@@ -27,5 +27,7 @@ see also:   https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
 
 <center>
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C9FXNFELYMDH8)
+
+
 So if you find my soft useful and want to help me somehow you can send me few bucks through PayPal donation. I will be really greatful! :D
 </center>
