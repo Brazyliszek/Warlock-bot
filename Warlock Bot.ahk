@@ -176,7 +176,7 @@ If !FileExist("Data\basic_settings.ini")
 
 
 
-MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`, which means it still has some bugs and not all function may work propely. Please report all bugs, false alerts, crashes on forum tibiapf.com with every important details in valid thread. `n`nThanks for using my software`, hope you like it. `nMate/Brazyliszek
+MsgBox, 262208, Important, Hi! `nPlease keep in mind this is version %version%`, which means it still has some bugs and not all function may work propely. Please report all bugs, false alerts, crashes on forum tibiapf.com with every important details in valid thread or directly on official webiste wrlbot.tk. `n`nThanks for using my software`, hope you like it. `nMate/Brazyliszek
 ; ######################################################################### AUTHENTICATION #########################################################################
 
 pass_authentication:
@@ -200,7 +200,7 @@ start_value := 1
 return
 
 Help_button:
-MsgBox, 0, Help, Version: %version%`nStandard password for beta version is demo/demo. If any other problems occured contact me using data below.`n`nSupport: via privmassage on forum tibiapf.com @Mate`n`n`ngithub site: https://github.com/Brazyliszek/Warlock-bot`nproject thread: https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot`nsee also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
+MsgBox, 0, Help, Version: %version%`nStandard password for beta version is demo/demo. If any other problems occured contact me using data below.`n`nSupport: via privmassage on forum tibiapf.com @Mate`nThrough contact page on official site: http://wrlbot.tk/contact`n`n`ngithub site: https://github.com/Brazyliszek/Warlock-bot`nproject thread: https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot`nsee also: https://tibiapf.com/showthread.php?35-all-versions-Hunter-Bot
 return
 
 Login:
@@ -1273,6 +1273,9 @@ eat_food(client_id){
 }
 return
 
+f1::
+anty_logout(title_tibia1)
+return
 
 anty_logout(client_id){                       ;  don't need window to be active
    GuiControlGet, Enabled_runemaking1,, Enabled_runemaking1
@@ -1292,38 +1295,38 @@ anty_logout(client_id){                       ;  don't need window to be active
    if (A_tickcount - last_time_antylog%pid_tibia%) < anty_log_time*1000
       return
    if (((Anty_log_dir1 != "") and (Anty_log_dir2 != "")) and (Anty_log_dir1 != Anty_log_dir2)){
-      if Anty_log_dir1 = "n"
-         direction1 = "up"
-      if Anty_log_dir1 = "e"
-         direction1 = "right"
-      if Anty_log_dir1 = "s"
-         direction1 = "down"
-      if Anty_log_dir1 = "w"
-         direction1 = "left"
-      if Anty_log_dir2 = "n"
-         direction2 = "up"
-      if Anty_log_dir2 = "e"
-         direction2 = "right"
-      if Anty_log_dir2 = "s"
-         direction2 = "down"
-      if Anty_log_dir2 = "w"
-         direction2 = "left"
+      if Anty_log_dir1 = n
+         direction1 = up
+      if Anty_log_dir1 = e
+         direction1 = right
+      if Anty_log_dir1 = s
+         direction1 = down
+      if Anty_log_dir1 = w
+         direction1 = left
+      if Anty_log_dir2 = n
+         direction2 = up
+      if Anty_log_dir2 = e
+         direction2 = right
+      if Anty_log_dir2 = s
+         direction2 = down
+      if Anty_log_dir2 = w
+         direction2 = left
    }
    else{
-      direction1 = "up"
-      direction2 = "down"
+      direction1 = up
+      direction2 = down
    }
    BlockInput, On
-   ControlSend,, {Ctrl down}, %client_id%
-   sleep_random(10, 50)
-   ControlSend,, {%direction1%}, %client_id%
-   sleep_random(100, 500)
-   ControlSend,, {%direction2%}, %client_id%
-   sleep_random(10, 50)
-   ControlSend,, {ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}{%direction1%}{Ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}{%direction1%}{Ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}{%direction1%}{Ctrl up}, %client_id%
    BlockInput, Off
    sleep_random(100, 500)
-   
+   BlockInput, On
+   ControlSend,, {Ctrl down}{%direction2%}{Ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}{%direction2%}{Ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}{%direction2%}{Ctrl up}, %client_id%
+   BlockInput, Off
    last_time_antylog%pid_tibia% := A_TickCount
    sleep_random(500,900)
 }
