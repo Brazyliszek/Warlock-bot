@@ -13,7 +13,7 @@ SetControlDelay, -1
 CoordMode, Mouse, Screen 
 #Include Gdip_all.ahk                               ; IMPORTANT LIBRARY, AVAILABLE HERE > http://www.autohotkey.net/~Rseding91/Gdip%20All/Gdip_All.ahk
 
-global version := "0.9.5 - beta"
+global version := "0.9.5.2 - beta"
 IniWrite, %version%, Data/basic_settings.ini, authentication data, version
 
 
@@ -50,6 +50,11 @@ IniWrite, %version%, Data/basic_settings.ini, authentication data, version
 
 
 ; latest ver. changelog
+;
+;   0.9.5.1 & 2
+;       fixed anty_logout() on medivia
+;       added auto 'sendmode = event' if medivia
+;
 ;   0.9.5
 ;       reorganized file managment
 ;       added online bot version confirmation
@@ -356,6 +361,13 @@ IfNotInString, edit_client_dir, exe
    SetTimer, RemoveTrayTip, 3500
    return
 }
+IfInString, edit_client_dir, Medivia
+   {   
+   GuiControl,, Bot_protection, 1
+   GuiControlGet, Bot_protection,,Bot_protection
+   IniWrite, %Bot_protection%, Data/basic_settings.ini, initialization data, Bot_protection
+   sleep, 300
+}
 IfNotExist, %edit_client_dir%
    {
    TrayTip, %BOTName%, Couldn't find client in given directory.
@@ -367,7 +379,8 @@ If (mc_count = "" ){
    SetTimer, RemoveTrayTip, 3500      
    return
 }   
-else{      Gui, Destroy
+else{      
+   Gui, Destroy
    gosub, run_clients
    sleep, 500
 }
@@ -1273,10 +1286,6 @@ eat_food(client_id){
 }
 return
 
-f1::
-anty_logout(title_tibia1)
-return
-
 anty_logout(client_id){                       ;  don't need window to be active
    GuiControlGet, Enabled_runemaking1,, Enabled_runemaking1
    GuiControlGet, Enabled_runemaking2,, Enabled_runemaking2
@@ -1317,15 +1326,19 @@ anty_logout(client_id){                       ;  don't need window to be active
       direction2 = down
    }
    BlockInput, On
-   ControlSend,, {Ctrl down}{%direction1%}{Ctrl up}, %client_id%
-   ControlSend,, {Ctrl down}{%direction1%}{Ctrl up}, %client_id%
-   ControlSend,, {Ctrl down}{%direction1%}{Ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}, %client_id%
+   sleep_random(5,10)
+   ControlSend,, {%direction1%}, %client_id%
+   sleep_random(5,10)
+   ControlSend,, {Ctrl up}, %client_id%
    BlockInput, Off
-   sleep_random(100, 500)
+   sleep_random(500,900)
    BlockInput, On
-   ControlSend,, {Ctrl down}{%direction2%}{Ctrl up}, %client_id%
-   ControlSend,, {Ctrl down}{%direction2%}{Ctrl up}, %client_id%
-   ControlSend,, {Ctrl down}{%direction2%}{Ctrl up}, %client_id%
+   ControlSend,, {Ctrl down}, %client_id%
+   sleep_random(5,10)
+   ControlSend,, {%direction2%}, %client_id%
+   sleep_random(5,10)
+   ControlSend,, {Ctrl up}, %client_id%
    BlockInput, Off
    last_time_antylog%pid_tibia% := A_TickCount
    sleep_random(500,900)
