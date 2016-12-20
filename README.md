@@ -10,7 +10,7 @@ Is to make a tool that will automate runemaking and make a chance for user to su
 
 Bot main functions:
 *   fully configurable runemaker, which can create blank runes, moves them to hand if necessery and others
-*   works with all Tibia clients - 7.1, 7.4, 7.6, otclient, medivia, 8.0, 8.6, tibia 11.0 and more!
+*   works with all Tibia clients - 7.1, 7.4, 7.6, otclient, 8.0, 8.6, tibia 11.0 and more!
 *   on-time screen checker for changes on selected window (screen check takes about 30ms)
 *   alarm system on lack of food, blank runes or screenchange which can be configured to logout, shutdown, play sound or walk desired directon
 *   allow you to throw conjured runes wherever you want (for example house)
