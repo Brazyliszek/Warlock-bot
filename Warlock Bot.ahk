@@ -13,7 +13,7 @@ SetControlDelay, -1
 CoordMode, Mouse, Screen 
 #Include Gdip_all.ahk                               ; IMPORTANT LIBRARY, AVAILABLE HERE > http://www.autohotkey.net/~Rseding91/Gdip%20All/Gdip_All.ahk
 
-global version := "0.9.5.2 - beta"
+global version := "0.9.5.3 - beta"
 IniWrite, %version%, Data/basic_settings.ini, authentication data, version
 
 
@@ -51,9 +51,8 @@ IniWrite, %version%, Data/basic_settings.ini, authentication data, version
 
 ; latest ver. changelog
 ;
-;   0.9.5.1 & 2
-;       fixed anty_logout() on medivia
-;       added auto 'sendmode = event' if medivia
+;   0.9.5.1 & 2 & 3
+;       fixed minor bugs
 ;
 ;   0.9.5
 ;       reorganized file managment
@@ -605,6 +604,7 @@ Gui, Add, DateTime, x152 y237 w55 vAuto_shutdown_time Choose 1, HH:mm
 Gui Add, CheckBox, x214 y237 w23 vAuto_shutdown_enabled gAuto_shutdown_enabled h23,
 
 
+
 Gui, Add, GroupBox, x253 y49 w217 h219 , Credits and contacts
 Gui Add, Text, x261 y71 w200 h53, Official project forum - you can report your bugs or share your opinion about the bot here:
 Gui Add, Link, x290 y97 w150 h23, <a href="https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot">tibiapf.com - warlockbot</a>
@@ -745,6 +745,8 @@ GuiControl, Choose, Show_notifications, %Show_notifications%
 GuiControl, Choose, Steps_to_walk, %Steps_to_walk%
 GuiControl,, Auto_shutdown_time, %Auto_shutdown_time%
 GuiControl,, Check_soul, %Check_soul%
+GuiControl, Disable, Food_time
+GuiControl, Disable, Anty_log_time
 
 
 
@@ -1246,8 +1248,8 @@ eat_food(client_id){
       pid_tibia = %pid_tibia1%
    else
       pid_tibia = %pid_tibia2%
-   if (A_tickcount - last_time_eatfood%pid_tibia%) < food_time*1000
-      return
+   ; if (A_tickcount - last_time_eatfood%pid_tibia%) < food_time*1000
+     ; return
    if (eat_using_hotkey = 1){
       cast(client_id, eat_hotkey)
       sleep_random(500, 800)
@@ -1301,7 +1303,7 @@ anty_logout(client_id){                       ;  don't need window to be active
       pid_tibia = %pid_tibia1%
    else
       pid_tibia = %pid_tibia2%
-   if (A_tickcount - last_time_antylog%pid_tibia%) < anty_log_time*1000
+   if (A_tickcount - last_time_antylog%pid_tibia%) < 300*1000
       return
    if (((Anty_log_dir1 != "") and (Anty_log_dir2 != "")) and (Anty_log_dir1 != Anty_log_dir2)){
       if Anty_log_dir1 = n
