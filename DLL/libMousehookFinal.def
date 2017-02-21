@@ -1,0 +1,4 @@
+EXPORTS
+    LeftClick @1
+    RightClick @2
+    dragDrop @3
