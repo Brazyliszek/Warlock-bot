@@ -7,6 +7,8 @@ Idea:
 
 Is to make a tool that will automate runemaking and make a chance for user to survive player attack or any other interruption by setting alarm modes and checks. Main goal is to help the players but also not to destroy old tibia community by massive rune farming so clients to operate was reduced to two at the same time.
 
+project thread:      https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot
+download:      http://wrlbot.tk/
 
 Bot main functions:
 *   fully configurable runemaker, which can create blank runes, moves them to hand if necessery and others
@@ -17,11 +19,6 @@ Bot main functions:
 *   allow you to throw conjured runes wherever you want (for example house)
 *   easy tool to obtain pictures of ingame items
 *   it stores last used settings, so you won't have to configure it everytime you close the bot
-
-
-
-project thread:      https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot
-
 
 
 <center>
