@@ -21,7 +21,7 @@ If !pToken := Gdip_Startup()
    ExitApp
 }
 
-global version := "0.9.6 - beta"
+global version := "0.9.6.1 - beta"
 IniWrite, %version%, Data/basic_settings.ini, authentication data, version
 
 
@@ -36,17 +36,15 @@ GOTO_INIT := 0
 ; github site: https://github.com/Brazyliszek/Warlock-bot
 
 ;################## todos ##################
-
-; po zrobieniu fisha lub fishing roda img w fishing gui 
+;dodac funkcje ifwinexist(1 or 2){ settimers off, guicontrol runemaking1 or 2 itp off, check gui itd)
+;info, ze win nie jest aktywne, a dziala screen checker powinno miec wysoki priorytet
+;dodac timer if mainbot win active := gui redraw
 ;zoptymalizowac fishing
-;poprawic scp, tam gdzie szuka x1,y1,0,0
 ; optymalizacja dll i sleepów
-; nie wiem czy dzialaja linki
 ; zmienic hide_client_1 na hide client 1
 ; zoptymalizowac scp, niepotrzebnie non stop zbiera to samo hwnd, niepotrzebnie caly czas robi bitmapy. Mozna po prostu dodac jakas zmienna iterujaca++ przy kazdej zmianie bmp lub hwnd  do controla i on by tylko to zczytywal i w razie w robil jakis gosub get bmp/hwnd
 
 ; add character moved as alarm type
-; double alarm effect doesnt work under allc onditiosn
 
 
 
@@ -61,8 +59,13 @@ GOTO_INIT := 0
 
 
 ; latest ver. changelog
+;   0.9.6.1
+;       repaired window managment (flash, fishing, main gui)
+;       repaired 'screen change' alarm after hiding minimized client window
+;       removed serious bug causing mouse movment block
 ;
 ;   0.9.6
+;       removed support for x32 systems
 ;       added tooltips on each control
 ;       added possibility to hide/show game window
 ;       improved tray menu items
@@ -1151,6 +1154,7 @@ return
 Rune_execution1:
    Critical
    global execution_allowed := 0
+   BlockInput, off
    IfWinNotExist, ahk_pid %pid_tibia1%
       {
       notification(2, title_tibia1, "Window " . title_tibia1 . " doesn't exist.")
@@ -1173,6 +1177,7 @@ return
 Rune_execution2:
    Critical
    global execution_allowed := 0
+   BlockInput, off
    IfWinNotExist, ahk_pid %pid_tibia2%
       {
       notification(2, title_tibia2, "Window " . title_tibia2 . " doesn't exist.")
@@ -1208,12 +1213,14 @@ Enabled_food_eater1:
       {
          notification(2, client_id, "Window " . title_tibia1 . " doesn't exist.")
          GuiControl,, Enabled_food_eater1, 0
+         check_gui()
          return
       }
    }
    if (food_time = "") or (food_time < 15) or (food_time > 2000){
       notification(1, title_tibia1, "Please enter valid food time")
       GuiControl,, Enabled_food_eater1, 0
+      check_gui()
       return
    }
    if (Enabled_food_eater1 = 1){
@@ -1222,6 +1229,7 @@ Enabled_food_eater1:
    }
    else if ((Enabled_food_eater1 = 0) and (Enabled_food_eater1 = 0))
       GuiControl, Disable%Enabled_food_eater1%, food_time
+   check_gui()
 return
 
 food_eater1:
@@ -1253,12 +1261,14 @@ Enabled_food_eater2:
       {
          notification(2, client_id, "Window " . title_tibia2 . " doesn't exist.")
          GuiControl,, Enabled_food_eater2, 0
+         check_gui()
          return
       }
    }
    if (food_time = "") or (food_time < 15) or (food_time > 2000){
       notification(1, title_tibia2, "Please enter valid food time")
       GuiControl,, Enabled_food_eater2, 0
+      check_gui()
       return
    }
    if (Enabled_food_eater2 = 1){
@@ -1267,6 +1277,7 @@ Enabled_food_eater2:
    }
    else if ((Enabled_food_eater1 = 0) and (Enabled_food_eater1 = 0))
       GuiControl, Disable%Enabled_food_eater2%, food_time
+   check_gui()
    
 return
 
@@ -1299,12 +1310,14 @@ Enabled_anty_logout1:
       {
          notification(2, client_id, "Window " . title_tibia1 . " doesn't exist.")
          GuiControl,, Enabled_anty_logout1, 0
+         check_gui()
          return
       }
    }
    if (anty_log_time = "") or (anty_log_time < 15) or (anty_log_time > 2000){
       notification(1, title_tibia1, "Please enter valid anty logout time.")
       GuiControl,, Enabled_anty_logout1, 0
+      check_gui()
       return
    }
    if (Enabled_anty_logout1 = 1){
@@ -1313,6 +1326,7 @@ Enabled_anty_logout1:
    }
    else if ((Enabled_anty_logout1 = 0) and (Enabled_anty_logout2 = 0))
       GuiControl, Disable%Enabled_anty_logout1%, anty_log_time
+   check_gui()
 return
 
 anty_logout_timer1:
@@ -1344,12 +1358,14 @@ Enabled_anty_logout2:
       {
          notification(2, client_id, "Window " . title_tibia2 . " doesn't exist.")
          GuiControl,, Enabled_anty_logout2, 0
+         check_gui()
          return
       }
    }
    if (anty_log_time = "") or (anty_log_time < 15) or (anty_log_time > 2000){
       notification(1, title_tibia2, "Please enter valid anty logout time.")
       GuiControl,, Enabled_anty_logout2, 0
+      check_gui()
       return
    }
    if (Enabled_anty_logout2 = 1){
@@ -1358,6 +1374,7 @@ Enabled_anty_logout2:
    }
    else if ((Enabled_anty_logout1 = 0) and (Enabled_anty_logout2 = 0))
       GuiControl, Disable%Enabled_anty_logout2%, anty_log_time
+   check_gui()
 return
 
 anty_logout_timer2:
@@ -1769,7 +1786,9 @@ say(client_id,text){                          ;  don't need window to be active
    BlockInput, On
    ControlSend,,{enter}, %client_id%
    ControlSend,, %text%, %client_id%
+   BlockInput, off
    sleep_random(70,150)
+   BlockInput, on
    ControlSend,, {Enter}, %client_id%
    BlockInput, Off
 }
@@ -1936,18 +1955,19 @@ move(client_id,object,destination){
       destination_pos_y := destination_pos_y - 25
       KeyWait, LButton
       KeyWait, RButton
-      BlockInput, MouseMove
-      Hotkey, LButton, do_nothing, On
-      Hotkey, RButton, do_nothing, On
+      ;;BlockInput, MouseMove
+      ;Hotkey, LButton, do_nothing, On
+      BlockInput, on ;Hotkey, RButton, do_nothing, On
       sleep_random(5, 10)
       if (Bot_protection = 1)
          DllCall("Data\mousehook64.dll\dragDrop", "AStr", client_id, "INT", false, "INT", object_pos_x, "INT", object_pos_y, "INT", destination_pos_x, "INT", destination_pos_y)
       else
          DllCall("Data\mousehook64.dll\dragDrop", "AStr", client_id, "INT", true, "INT", object_pos_x, "INT", object_pos_y, "INT", destination_pos_x, "INT", destination_pos_y)
       sleep_random(5, 10)
-      Hotkey, LButton, do_nothing, Off
-      Hotkey, RButton, do_nothing, Off
-      BlockInput, MouseMoveOff
+      BlockInput, Off
+      ;Hotkey, LButton, do_nothing, Off
+      ;Hotkey, RButton, do_nothing, Off
+      ;;BlockInput, MouseMoveOff
       Sleep_random(150, 180)
    }
    else
@@ -1976,15 +1996,15 @@ use(client_id, object){
    if ((item_pos_x != "") and (item_pos_y != "")){
       KeyWait, LButton
       KeyWait, RButton
-      BlockInput, Mouse
-      Hotkey, LButton, do_nothing, On
-      Hotkey, RButton, do_nothing, On
+      ;BlockInput, Mouse
+      ;Hotkey, LButton, do_nothing, On
+      BlockInput, on ;Hotkey, RButton, do_nothing, On
 ;      Sleep_random(40, 60)
       item_pos_y := item_pos_y - 35
       DllCall("Data\mousehook64.dll\RightClick", "AStr", client_id, "INT", item_pos_x, "INT", item_pos_y)
-      Sleep_random(150, 180)
-      Hotkey, LButton, do_nothing, Off
-      Hotkey, RButton, do_nothing, Off
+      Sleep_random(15, 30)
+      ;Hotkey, LButton, do_nothing, Off
+      ;Hotkey, RButton, do_nothing, Off
       BlockInput, Off
    }
    else
@@ -2324,9 +2344,9 @@ take_screen_shot:
    Gdip_DisposeImage(pBitmap)
    ; Gdip_Shutdown(pToken)
    Gui, Screenshoot_window: Hide
-   WinActivate, ahk_id %MainBotWindow%
    notification(0, "Succes!", "Item saved as " . outfile . ".")
    if (img_filename = "area_check1"){
+      WinActivate, ahk_id %MainBotWindow%
       global area_start_x1 := round(ess_x)
       global area_start_y1 := round(ess_y)
       GuiControl,, Image_screen_checker1, %outfile%
@@ -2334,6 +2354,7 @@ take_screen_shot:
       bmparea_check1 := Gdip_CreateBitmapFromFile(outfile)
    }
    else if (img_filename = "area_check2"){
+      WinActivate, ahk_id %MainBotWindow%
       global area_start_x2 := round(ess_x)
       global area_start_y2 := round(ess_y)
       GuiControl,, Image_screen_checker2, %outfile%
@@ -2348,8 +2369,10 @@ take_screen_shot:
       GuiControl, Fishing_gui1:, fish1, %outfile%
       GuiControl, Fishing_gui2:, fish2, %outfile%
    }
-   else
+   else{
+      WinActivate, ahk_id %MainBotWindow%
       GuiControl,, %img_filename%, %outfile%
+   }
    global screenshooter_active := 0
 return
 
@@ -2365,15 +2388,19 @@ take_screen_shot_off:
 return
 
 Take_image_fishing_rod1:
+   hide_sqmnet_fishing()
    take_screenshot("fishing_rod", 28, 28)
 return
 Take_image_fishing_rod2:
+   hide_sqmnet_fishing()
    take_screenshot("fishing_rod", 28, 28)
 return
 Take_image_fish1:
+   hide_sqmnet_fishing()
    take_screenshot("fish", 10, 10)
 return
 Take_image_fish2:
+   hide_sqmnet_fishing()
    take_screenshot("fish", 10, 10)
 return
 Take_image_conjured_rune1:
@@ -2850,6 +2877,10 @@ Check_gui(){                                    ; it grays out gui controls
       GuiControl, Disabled, Food_time
    else
       GuiControl, Enabled, Food_time
+   GuiControlGet, fishing_enabled1,, fishing_enabled1
+   GuiControl, disable%fishing_enabled1%, Fishing_setup1
+   GuiControlGet, fishing_enabled2,, fishing_enabled2
+   GuiControl, disable%fishing_enabled2%, Fishing_setup2
    if ((Enabled_runemaking1 = 1) or (Enabled_runemaking2 = 1))
       check_var = 1
    else{
@@ -2901,18 +2932,19 @@ auto_stack(client_id, object){
 		  destination_pos_y := destination_pos_y - 25
 		  KeyWait, LButton
 		  KeyWait, RButton
-		  BlockInput, MouseMove
-		  Hotkey, LButton, do_nothing, On
-		  Hotkey, RButton, do_nothing, On
+		  ;;BlockInput, MouseMove
+		  ;Hotkey, LButton, do_nothing, On
+		  BlockInput, on ;Hotkey, RButton, do_nothing, On
 		  sleep_random(5, 10)
 		  if (Bot_protection = 1)
 			 DllCall("Data\mousehook64.dll\dragDrop", "AStr", client_id, "INT", false, "INT", object_pos_x, "INT", object_pos_y, "INT", destination_pos_x, "INT", destination_pos_y)
 		  else
 			 DllCall("Data\mousehook64.dll\dragDrop", "AStr", client_id, "INT", true, "INT", object_pos_x, "INT", object_pos_y, "INT", destination_pos_x, "INT", destination_pos_y)
 		  sleep_random(5, 10)
-		  Hotkey, LButton, do_nothing, Off
-		  Hotkey, RButton, do_nothing, Off
-		  BlockInput, MouseMoveOff
+          BlockInput, off
+		  ;Hotkey, LButton, do_nothing, Off
+		  ;Hotkey, RButton, do_nothing, Off
+		  ;;BlockInput, MouseMoveOff
 		  Sleep_random(150, 180)
 	   }
 	   count2 := find_instances(client_id, object, 2, 0)
@@ -2936,18 +2968,19 @@ auto_stack(client_id, object){
 				destination_pos_y := destination_pos_y - 25
 				KeyWait, LButton
 				KeyWait, RButton
-				BlockInput, MouseMove
-				Hotkey, LButton, do_nothing, On
-				Hotkey, RButton, do_nothing, On
+				;;BlockInput, MouseMove
+				;Hotkey, LButton, do_nothing, On
+				BlockInput, on ;Hotkey, RButton, do_nothing, On
 				sleep_random(5, 10)
 				if (Bot_protection = 1)
 					DllCall("Data\mousehook64.dll\dragDrop", "AStr", client_id, "INT", false, "INT", object_pos_x, "INT", object_pos_y, "INT", destination_pos_x, "INT", destination_pos_y)
 				else
 					DllCall("Data\mousehook64.dll\dragDrop", "AStr", client_id, "INT", true, "INT", object_pos_x, "INT", object_pos_y, "INT", destination_pos_x, "INT", destination_pos_y)
 				sleep_random(5, 10)
-				Hotkey, LButton, do_nothing, Off
-				Hotkey, RButton, do_nothing, Off
-				BlockInput, MouseMoveOff
+                BlockInput, off
+				;Hotkey, LButton, do_nothing, Off
+				;Hotkey, RButton, do_nothing, Off
+				;;BlockInput, MouseMoveOff
 				Sleep_random(150, 180)
 			}
 			count3 := find_instances(client_id, object, 2, 0)
@@ -2961,6 +2994,8 @@ auto_stack(client_id, object){
 ;	Msgbox, % A_tickcount - start_time
 }
 return
+
+
 
 
 Dwm_SetWindowAttributeTransistionDisable(hwnd,bool:=1)
@@ -3403,7 +3438,6 @@ if (CastSpell_IfSoul = 1){
 return
 
 
-
 Tab1:
 Gui, Submit, NoHide
 if ((Tab1 = "Alarms") or (Tab1 = "Settings") or (Tab1 = "Advanced"))
@@ -3491,8 +3525,8 @@ Enabled_screen_checker1:
       }
    }
    if (Enabled_screen_checker1 = 1){
-      check1_x1 := 0 ; % area_start_x1 + 5
-      check1_y1 := 0 ; % area_start_y1 + 5
+      check1_x1 :=  area_start_x1 - 5
+      check1_y1 :=  area_start_y1 - 5
       check1_x2 := 0 ; % area_start_x1 +100
       check1_y2 := 0 ; % area_start_y1 +90
       GuiControl,CP:,CP_check1_x1, %check1_x1%
@@ -3545,8 +3579,8 @@ Enabled_screen_checker2:
       }
    }
    if (Enabled_screen_checker2 = 1){
-      check2_x1 := 0 ; % area_start_x2 + 5
-      check2_y1 := 0 ; % area_start_y2 + 5
+      check2_x1 := area_start_x2 - 5
+      check2_y1 := area_start_y2 - 5
       check2_x2 := 0 ; % area_start_x2 +100
       check2_y2 := 0 ; % area_start_y2 +90
       GuiControl,CP:,CP_check2_x1, %check2_x1%
@@ -3573,7 +3607,7 @@ CP_GUI:
    GuiControlGet, Enabled_screen_checker1,,Enabled_screen_checker1
    GuiControlGet, Enabled_screen_checker2,,Enabled_screen_checker2
    Gui, CP: New
-   Gui, CP: +HwndCommunicationPlatform  +Caption +LastFound +ToolWindow +AlwaysOnTop +E0x20   ; WS_EX_TRANSPARENT ; communication panel
+   Gui, CP: +HwndCommunicationPlatform  +Caption +LastFound +ToolWindow +E0x20   ;  +AlwaysOnTop ; WS_EX_TRANSPARENT ; communication panel
    Gui, CP: Add, Edit, x12 y10 w60 h20 vCP_isActive_checker1 Disabled, %Enabled_screen_checker1%
    Gui, CP: Add, Edit, x12 y30 w60 h20 vCP_hwnd1 Disabled, empty
    Gui, CP: Add, Edit, x12 y50 w60 h20 vCP_check1_x1 Disabled, empty
@@ -3626,7 +3660,7 @@ Read_scp_board1:
             if (transparent_tibia1 = 1)
                WinActivate, %title_tibia1%
             else
-               notification(2, "Screen checker", "Screen checker: window 1 must be active to be checked. Use 'hide/show' button if you want to hide game.")
+               notification(1, "Screen checker", "Screen checker: window 1 must be maximized to be checked. Use 'hide/show' button if you want to hide game.")
          }
       }
    }
@@ -3665,7 +3699,7 @@ Read_scp_board2:
             if (transparent_tibia2 = 1)
                WinActivate, %title_tibia2%
             else
-               notification(2, "Screen checker", "Screen checker: window 2 must be active to be checked. Use 'hide/show' button if you want to hide game.")
+               notification(1, "Screen checker", "Screen checker: window 2 must be maximized to be checked. Use 'hide/show' button if you want to hide game.")
          }
       }
    }
@@ -3676,10 +3710,12 @@ Fishing_setup1:
    if (!WinExist(title_tibia1)){
       notification(2, "Fishing tool", "Window titled: " . title_tibia1 . " does not exist.")
       GuiControl,,Fishing_enabled1, 0
+      check_gui()
       return
    }
    If !(WinExist(Fishing_gui1_title)){
       GuiControl,,Fishing_enabled1, 0
+      check_gui()
       Hotkey, ESC, Fishing_restore_windows1, On
       if (DllCall("IsWindowVisible", "UInt", WinExist(Fishing_gui2_title))){
          WinGetPos, win_temp_posX, win_temp_posY, , ,%Fishing_gui2_title%
@@ -3919,6 +3955,7 @@ fishing_enabled1:
       {
          notification(2, title_tibia1, "Window " . title_tibia1 . " doesn't exist.")
          GuiControl,, fishing_enabled1, 0
+         check_gui()
          return
       }
    }
@@ -3928,6 +3965,7 @@ fishing_enabled1:
     if (!(winexist("x0y0zAABBCC1")) or random_posToFish_template1 = ""){
       notification(2, title_tibia1, "You should first get spots you want to fish on.")
       GuiControl,, fishing_enabled1, 0
+      Check_gui()
       DetectHiddenWindows, Off
    }
    if DllCall("IsWindowVisible", "UInt", WinExist("x0y0zAABBCC1"))
@@ -3949,6 +3987,8 @@ fishing_enabled1:
    if (fishing_enabled1 = 1){
       SetTimer, fishing_execution, %fishing_time%
    }
+   gosub, Fishing_done1
+   check_gui()
 return
 
 ; ################################################################# FISHING 2 ################################################################################
@@ -3958,12 +3998,12 @@ Fishing_setup2:
    if (!WinExist(title_tibia2)){
       notification(2, "Fishing tool", "Window titled: " . title_tibia2 . " does not exist.")
       GuiControl,,Fishing_enabled2, 0
-      
+      check_gui()
       return
    }
    If !(WinExist(Fishing_gui2_title)){
       GuiControl,,Fishing_enabled2, 0
-      
+      check_gui()
       Hotkey, ESC, Fishing_restore_windows2, On
       if (DllCall("IsWindowVisible", "UInt", WinExist(Fishing_gui1_title))){
          WinGetPos, win_temp_posX, win_temp_posY, , ,%Fishing_gui1_title%
@@ -4089,7 +4129,7 @@ Fishing_showSqmsNet2:
               posx := topleft_gamewindow2_x + i*sqm_width2 
               posy := topleft_gamewindow2_y + j*sqm_height2 
               Gui, second_sqm%i%x%j%: Show, x%posx% y%posy% w%sqm_width2% h%sqm_height2% NoActivate, x%i%y%j%zAABBCC2
-              fishing2_spot[i, j] 	:= a
+              fishing2_spot[i, j] := a
               a := a + 1
               j := j + 1
           }
@@ -4203,7 +4243,7 @@ fishing_enabled2:
       {
          notification(2, title_tibia2, "Window " . title_tibia2 . " doesn't exist.")
          GuiControl,, fishing_enabled2, 0
-         
+         check_gui()
          return
       }
    }
@@ -4213,7 +4253,7 @@ fishing_enabled2:
     if (!(winexist("x0y0zAABBCC2")) or random_posToFish_template2 = ""){
       notification(2, title_tibia2, "You should first get spots you want to fish on.")
       GuiControl,, fishing_enabled2, 0
-      
+      Check_gui()
       DetectHiddenWindows, Off
    }
    if DllCall("IsWindowVisible", "UInt", WinExist("x0y0zAABBCC2"))
@@ -4235,9 +4275,16 @@ fishing_enabled2:
    if (fishing_enabled2 = 1){
       SetTimer, fishing_execution, %fishing_time%
    }
+   gosub, Fishing_done2
+   check_gui()
 return
 
-
+hide_sqmnet_fishing(){
+   if DllCall("IsWindowVisible", "UInt", WinExist("x0y0zAABBCC1"))
+      gosub, Fishing_showSqmsNet1
+   if DllCall("IsWindowVisible", "UInt", WinExist("x0y0zAABBCC2"))
+      gosub, Fishing_showSqmsNet2
+}
 ;################################################################# FISHING EXECUTION ################################################################################
    fishing_execution:
    GuiControlGet, fishing_enabled1,, fishing_enabled1
@@ -4245,8 +4292,7 @@ return
       if (!WinExist(title_tibia1)){
          notification(1, "Fishing tool", "Window titled: " . title_tibia1 . " does not exist.")
          GuiControl,,Fishing_enabled1, 0
-      }
-      If (!WinActive(title_tibia1)){
+         check_gui()
          goto, Fishing2
       }
       GuiControlGet, Fishing_noFood_enabled1,Fishing_gui1:,Fishing_noFood_enabled1
@@ -4274,21 +4320,25 @@ return
       if (posToFish1_x = ""){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0011)")
          GuiControl,,Fishing_enabled1, 0
+         check_gui()
          goto, Fishing2
       }
       if (posToFish1_y = ""){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0012)")
          GuiControl,,Fishing_enabled1, 0
+         check_gui()
          goto, Fishing2
       }
       if (posToFish1_x < 0 or posToFish1_x > A_ScreenWidth){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0013)")
          GuiControl,,Fishing_enabled1, 0
+         check_gui()
          goto, Fishing2
       }
       if (posToFish1_y < 0 or posToFish1_y > A_ScreenHeight){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0014)")
          GuiControl,,Fishing_enabled1, 0
+         check_gui()
          goto, Fishing2
       }
       if (find(title_tibia1, "fishing_rod", "inventory", 1, 0) = 1){
@@ -4298,9 +4348,9 @@ return
          posToFish1_y := posToFish1_y + random_pos_y
          KeyWait, LButton
          KeyWait, RButton
-         BlockInput, Mouse
-         Hotkey, LButton, do_nothing, On
-         Hotkey, RButton, do_nothing, On
+         ;BlockInput, Mouse
+         ;Hotkey, LButton, do_nothing, On
+         BlockInput, on ;Hotkey, RButton, do_nothing, On
          sleep_random(5, 10)
          posToFish1_y := posToFish1_y - 35
          item_pos_y := item_pos_y - 35
@@ -4309,8 +4359,8 @@ return
          else
             DllCall("Data\mousehook64.dll\useOn", "AStr", title_tibia1, "INT", true, "INT", item_pos_x, "INT", item_pos_y, "INT", posToFish1_x, "INT", posToFish1_y)   
          sleep_random(5, 10)
-         Hotkey, LButton, do_nothing, Off
-         Hotkey, RButton, do_nothing, Off
+         ;Hotkey, LButton, do_nothing, Off
+         ;Hotkey, RButton, do_nothing, Off
          BlockInput, Off
          Sleep_random(100,200)
          Auto_stack(title_tibia1, "fish")
@@ -4318,7 +4368,7 @@ return
       else{
          ;notification(1, title_tibia1, "Couldn't find fishing rod in inventory. Fishing will stop now.")
          GuiControl,,Fishing_enabled1, 0
-         
+         check_gui()
       }
    }
    fishing2:
@@ -4328,9 +4378,7 @@ return
       if (!WinExist(title_tibia2)){
          notification(2, "Fishing tool", "Window titled: " . title_tibia2 . " does not exist.")
          GuiControl,,Fishing_enabled2, 0
-         return
-      }
-      If (!WinActive(title_tibia2)){
+         check_gui()
          return
       }
       GuiControlGet, Fishing_noFood_enabled2,Fishing_gui2:,Fishing_noFood_enabled2
@@ -4358,25 +4406,25 @@ return
       if (posToFish2_x = ""){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0011)")
          GuiControl,,Fishing_enabled2, 0
-         
+         check_gui()
          return
       }
       if (posToFish2_y = ""){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0012)")
          GuiControl,,Fishing_enabled2, 0
-         
+         check_gui()
          return
       }
       if (posToFish2_x < 0 or posToFish2_x > A_ScreenWidth){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0013)")
          GuiControl,,Fishing_enabled2, 0
-         
+         check_gui()
          return
       }
       if (posToFish2_y < 0 or posToFish2_y > A_ScreenHeight){
          notification(1, "Fishing tool", "Error while loading sqms to fish (0014)")
          GuiControl,,Fishing_enabled2, 0
-         
+         check_gui()
          return
       }
       if  (find(title_tibia2, "fishing_rod", "inventory", 1, 0) = 1){
@@ -4386,9 +4434,9 @@ return
          posToFish2_y := posToFish2_y + random_pos_y
          KeyWait, LButton
          KeyWait, RButton
-         BlockInput, Mouse
-         Hotkey, LButton, do_nothing, On
-         Hotkey, RButton, do_nothing, On
+         ;BlockInput, Mouse
+         ;Hotkey, LButton, do_nothing, On
+         BlockInput, on ;Hotkey, RButton, do_nothing, On
          sleep_random(5, 10)
          posToFish2_y := posToFish2_y - 35
          item_pos_y := item_pos_y - 35
@@ -4397,8 +4445,8 @@ return
          else
             DllCall("Data\mousehook64.dll\useOn", "AStr", title_tibia2, "INT", true, "INT", item_pos_x, "INT", item_pos_y, "INT", posToFish2_x, "INT", posToFish2_y)   
          sleep_random(5, 10)
-         Hotkey, LButton, do_nothing, Off
-         Hotkey, RButton, do_nothing, Off
+         ;Hotkey, LButton, do_nothing, Off
+         ;Hotkey, RButton, do_nothing, Off
          BlockInput, Off
          Sleep_random(100,200)
          Auto_stack(title_tibia2, "fish")
@@ -4406,6 +4454,7 @@ return
       else{
          ;notification(1, title_tibia2, "Couldn't find fishing rod in inventory. Fishing will stop now.")
          GuiControl,,Fishing_enabled2, 0
+         check_gui()
       }
    }
    GuiControlGet, fishing_enabled1,, fishing_enabled1
@@ -4431,6 +4480,11 @@ return
 
 Toggle_hide1:
 Hide_client_1:
+GuiControlGet,Enabled_screen_checker1,,Enabled_screen_checker1
+if (Enabled_screen_checker1){
+   GuiControl,,Enabled_screen_checker1,0
+   sc_var1 := 1
+}
 if NewName1 <> Show_client_1
 {
    if winexist(title_tibia1){
@@ -4452,10 +4506,19 @@ else
     NewName1= Hide_client_1
 }
 menu, tray, rename, %OldName1%, %NewName1%
+if (sc_var1){
+   GuiControl,,Enabled_screen_checker1,1
+   sc_var1 := 0
+}
 return
 
 Toggle_hide2:
 Hide_client_2:
+GuiControlGet,Enabled_screen_checker2,,Enabled_screen_checker2
+if (Enabled_screen_checker2){
+   GuiControl,,Enabled_screen_checker2,0
+   sc_var2 := 1
+}
 if NewName2 <> Show_client_2
 {
    if winexist(title_tibia2){
@@ -4477,6 +4540,10 @@ else
     NewName2= Hide_client_2
 }
 menu, tray, rename, %OldName2%, %NewName2%
+if (sc_var2){
+   GuiControl,,Enabled_screen_checker2,1
+   sc_var2 := 0
+}
 return
 
 
