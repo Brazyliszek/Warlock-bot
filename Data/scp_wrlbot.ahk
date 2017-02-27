@@ -24,7 +24,7 @@ If !pToken := Gdip_Startup()
 ;	screen checker platform
 ControlGet, isActive_checker1, Line,1,edit1, CP_WRLBOT
 ControlGet, client_HWND1, Line,1,edit2, CP_WRLBOT
-ControlGet, check1_x1, Line,1,edit4, CP_WRLBOT
+ControlGet, check1_x1, Line,1,edit3, CP_WRLBOT
 ControlGet, check1_y1, Line,1,edit4, CP_WRLBOT
 ControlGet, isActive_checker2, Line,1,edit5, CP_WRLBOT
 ControlGet, client_HWND2, Line,1,edit6, CP_WRLBOT
@@ -32,7 +32,7 @@ ControlGet, check2_x1, Line,1,edit7, CP_WRLBOT
 ControlGet, check2_y1, Line,1,edit8, CP_WRLBOT
 ControlGet, bot_HWND, Line,1,edit9, CP_WRLBOT
 
-Gui, +HwndScreenCheckerPlatform +Caption +LastFound +ToolWindow +E0x20 +AlwaysOnTop ; WS_EX_TRANSPARENT 
+Gui, +HwndScreenCheckerPlatform +Caption +LastFound +ToolWindow +E0x20 ;+AlwaysOnTop ; WS_EX_TRANSPARENT 
 Gui, Add, Edit, x12 y10 w60 h20 Disabled vScreen_check_result1,s
 Gui, Add, Edit, x12 y30 w60 h20 Disabled vScreen_check_result2,s
 Gui, Add, Edit, x12 y50 w60 h20 Disabled, %ScreenCheckerPlatform%
@@ -53,7 +53,7 @@ screen_check:
 		ControlGet, client_HWND1, Line,1,edit2, CP_WRLBOT
 		bmpHaystack1 := Gdip_BitmapFromHWND(client_HWND1)
 		bmparea_check1 := Gdip_CreateBitmapFromFile("Images\area_check1.bmp")
-		ControlGet, check1_x1, Line,1,edit4, CP_WRLBOT
+		ControlGet, check1_x1, Line,1,edit3, CP_WRLBOT
 		ControlGet, check1_y1, Line,1,edit4, CP_WRLBOT
 		RET1 := Gdip_ImageSearch(bmpHaystack1,bmparea_check1, result1, check1_x1, check1_y1, 0, 0,,,8)
 		Gdip_DisposeImage(bmpHaystack1)
@@ -99,4 +99,3 @@ return
 
 GuiClose:
 ExitApp
-
