@@ -9,7 +9,7 @@ Is to make a tool that will automate runemaking and make a chance for user to su
 
 project thread:      https://tibiapf.com/showthread.php?71-all-versions-Warlock-Bot
 
-download compiled version:      http://wrlbot.000webhostapp.com/
+download compiled version:      https://github.com/Brazyliszek/Warlock-bot/blob/master/Warlock%20Bot.exe
 
 Bot main functions:
 *   fully configurable runemaker, which can create blank runes, moves them to hand if necessery and others
