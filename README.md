@@ -13,7 +13,7 @@ download compiled version:      https://github.com/Brazyliszek/Warlock-bot/blob/
 
 Bot main functions:
 *   fully configurable runemaker, which can create blank runes, moves them to hand if necessery and others
-*   works with all Tibia clients - 7.1, 7.4, 7.6, otclient, 8.0, 8.6, tibia 11.0 and more!
+*   works with all Tibia clients - 7.1, 7.4, 7.6, otclient, 8.0, 8.6 and more!
 *   built-in fisher, anty-idle and food eater
 *   on-time screen checker for changes on selected window (screen check takes about 30ms)
 *   alarm system on lack of food, blank runes or screenchange which can be configured to logout, shutdown, play sound or walk desired directon
